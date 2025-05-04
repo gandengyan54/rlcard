@@ -69,6 +69,8 @@ def create_buffers(
                 for key in _buffers:
                     if device == "cpu":
                         _buffer = torch.empty(**specs[key]).to('cpu').share_memory_()
+                    elif device == "mps":
+                        _buffer = torch.empty(**specs[key]).to('mps').share_memory_()
                     else:
                         _buffer = torch.empty(**specs[key]).to('cuda:'+str(device)).share_memory_()
                     _buffers[key].append(_buffer)
