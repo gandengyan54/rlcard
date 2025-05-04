@@ -52,7 +52,13 @@ class DMCAgent:
         device="0",
     ):
         self.use_raw = False
-        self.device = 'cuda:'+device if device != "cpu" else "cpu"
+        if device == "mps":
+            self.device = "mps"
+        elif device != "cpu":
+            self.device = 'cuda:'+device
+        else:
+            self.device = "cpu"
+        print(f'DMCAgent 创建网络, device: {self.device}')
         self.net = DMCNet(state_shape, action_shape, mlp_layers).to(self.device)
         self.exp_epsilon = exp_epsilon
         self.action_shape = action_shape
