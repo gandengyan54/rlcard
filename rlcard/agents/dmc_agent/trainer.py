@@ -55,7 +55,12 @@ def learn(
     lock
 ):
     """Performs a learning (optimization) step."""
-    device = "cuda:"+str(training_device) if training_device != "cpu" else "cpu"
+    if training_device == "mps":
+        device = "mps"
+    elif training_device != "cpu":
+        device = "cuda:" + str(training_device)
+    else:
+        device = "cpu"
     state = torch.flatten(batch['state'].to(device), 0, 1).float()
     action = torch.flatten(batch['action'].to(device), 0, 1).float()
     target = torch.flatten(batch['target'].to(device), 0, 1)
@@ -187,8 +192,12 @@ class DMCTrainer:
         self.mean_episode_return_buf = [deque(maxlen=100) for _ in range(self.num_players)]
 
         if cuda == "": # Use CPU
-            self.device_iterator = ['cpu']
-            self.training_device = "cpu"
+            if self.training_device == "mps":
+                self.device_iterator = ['cpu']
+                self.training_device = "mps"
+            else:
+                self.device_iterator = ['cpu']
+                self.training_device = "cpu"
         else:
             self.device_iterator = range(num_actor_devices)
 
@@ -253,7 +262,7 @@ class DMCTrainer:
         if self.load_model and os.path.exists(self.checkpointpath):
             checkpoint_states = torch.load(
                     self.checkpointpath,
-                    map_location="cuda:"+str(self.training_device) if self.training_device != "cpu" else "cpu"
+                    map_location="mps" if self.training_device == "mps" else ("cuda:"+str(self.training_device) if self.training_device != "cpu" else "cpu")
             )
             for p in range(self.num_players):
                 learner_model.get_agent(p).load_state_dict(checkpoint_states["model_state_dict"][p])
